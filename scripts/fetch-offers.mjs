@@ -146,6 +146,7 @@ console.log(`${perKey.length} malzeme için aday teklif bulundu.`);
 
 const out = {};
 const add = (o, k, qty) => {
+  const pq = ING[k][4]; if (!(qty > 0) || qty > pq * 25 || qty < pq / 60) return; // saçma paket boyutlarını ele
   (out[o.market] ||= []).push({ n: o.n, size: o.size, p: o.p, old: o.old, app: o.app, key: k, qty, from: o.from, to: o.to });
 };
 if (API_KEY) {
