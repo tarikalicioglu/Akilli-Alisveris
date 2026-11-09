@@ -396,7 +396,7 @@ function computeReport(){
   const base=items.reduce((s,i)=>s+avgCost(i.key,i.qty),0);
   const rows=mks.map(m=>{
     let total=0, hits=0; const lines=items.map(i=>{ const b=bestOffer(m,i.key,i.qty); const a=avgCost(i.key,i.qty);
-      if(b){ hits++; total+=b.cost; return {i, offer:b, cost:b.cost, avg:a}; } total+=a; return {i, cost:a, avg:a}; });
+      if(b && b.cost<=a){ hits++; total+=b.cost; return {i, offer:b, cost:b.cost, avg:a}; } total+=a; return {i, cost:a, avg:a}; });
     return {m,total,hits,lines};
   }).sort((a,b)=>a.total-b.total);
   // karma: her ürünü en ucuz yerden al
