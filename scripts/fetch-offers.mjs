@@ -52,7 +52,7 @@ async function search(q, k) {
     if (r.status === 429) { await sleep(5000 * (t + 1)); continue; }
     if (!r.ok) throw new Error(`Arama hatası (${q}): HTTP ${r.status}`);
     const j = await r.json();
-    if (!debugShown && j.results && j.results[0]) { debugShown = true; console.log("Örnek ham sonuç:", JSON.stringify(j.results[0]).slice(0, 1500)); }
+    if (!debugShown && j.results && j.results.length) { debugShown = true; for (const x of j.results.slice(0, 6)) console.log("Örnek:", JSON.stringify({ p: x.price, ref: x.referencePrice, q: x.quantity, vol: x.volume, unit: x.unit, d: x.description, prod: x.product && x.product.name })); }
     return j.results || [];
   }
   return [];
@@ -64,13 +64,27 @@ function toOffer(r) {
   if (!market || !(price > 0)) return null;
   const brand = (r.brand && r.brand.name) || "";
   const prod = (r.product && r.product.name) || r.title || "";
-  const unit = (r.unit && (r.unit.shortName || r.unit.name)) || "";
-  const qty = Number(r.quantity) || null;
+  const unit = String((r.unit && (r.unit.shortName || r.unit.name)) || "").toLowerCase();
   const v = (r.validityDates && r.validityDates[0]) || {};
+  // Geçerlilik: bugün geçerli olan ya da en geç 3 gün içinde başlayanlar
+  const now = Date.now(), from = v.from ? Date.parse(v.from) : now, to = v.to ? Date.parse(v.to) : now + 7 * 864e5;
+  if (to < now || from > now + 3 * 864e5) return null;
+  // Paket miktarı: fiyat / birim fiyat (referencePrice birim başına fiyattır, ör. €/kg)
+  const ref = Number(r.referencePrice); let qty = null, qu = "";
+  const base = Number(r.quantity) || 1;
+  if (ref > 0) {
+    const amount = (price / ref) * base;
+    if (unit === "kg") { qty = Math.round(amount * 1000 / 5) * 5; qu = "g"; }
+    else if (unit === "l") { qty = Math.round(amount * 1000 / 5) * 5; qu = "ml"; }
+    else if (unit === "g" || unit === "ml") { qty = Math.round(amount); qu = unit; }
+    else if (/st/.test(unit)) { qty = Math.round(amount); qu = "Stück"; }
+  }
+  const sizeTxt = qty ? (qu === "g" && qty >= 1000 ? (qty / 1000).toLocaleString("de-DE") + " kg" : qu === "ml" && qty >= 1000 ? (qty / 1000).toLocaleString("de-DE") + " l" : qty + " " + qu) : "";
   return {
     market, id: r.id, n: [brand, prod].filter(Boolean).join(" ").slice(0, 90) || String(r.description || "").slice(0, 90),
-    desc: String(r.description || "").replace(/\s+/g, " ").slice(0, 160), size: qty && unit ? `${qty} ${unit}` : "",
-    rawQty: qty, rawUnit: unit.toLowerCase(), p: price, old: Number(r.oldPrice) || null,
+    desc: String(r.description || "").replace(/\s+/g, " ").slice(0, 200), size: sizeTxt,
+    rawQty: qty, rawUnit: qu.toLowerCase(), refInfo: ref > 0 ? `${ref} €/${unit}` : "", p: price, old: Number(r.oldPrice) || null,
+    app: !!r.requiresLoyalityMembership,
     from: v.from ? String(v.from).slice(0, 10) : "", to: v.to ? String(v.to).slice(0, 10) : "",
   };
 }
@@ -84,7 +98,7 @@ function guessQty(k, o) {
   const unit = ING[k][3]; const u = o.rawUnit; let q = o.rawQty; if (!q) return null;
   if (unit === "g") { if (u === "g") return q; if (u === "kg") return q * 1000; }
   if (unit === "ml") { if (u === "ml") return q; if (u === "l") return q * 1000; }
-  if (unit === "ad" && /st(ü|u)ck|stk/.test(u)) return q;
+  if (unit === "ad" && u === "stück") return q;
   return null;
 }
 
@@ -98,7 +112,7 @@ Her seçilen teklif için qty: paketin malzemenin KATALOG BİRİMİNDEKİ miktar
 Paket boyutu belli değilse ama tipik paket açıksa (ör. tereyağı 250 g) makul tahmin yap; hiç tahmin edilemiyorsa o teklifi atla.
 
 ${batch.map(({ k, cands }) => `### ${k} | ${ING[k][0]} | ${ING[k][1]} | birim: ${ING[k][3]}${ING[k][7] ? " (" + ING[k][7] + ")" : ""}
-${cands.map((o, i) => `${i}: [${o.market}] ${o.n} | ${o.size || "?"} | ${o.p} € | ${o.desc}`).join("\n")}`).join("\n\n")}
+${cands.map((o, i) => `${i}: [${o.market}] ${o.n} | paket≈${o.size || "?"} | ${o.p} € (${o.refInfo || "-"}) | ${o.desc}`).join("\n")}`).join("\n\n")}
 
 Sadece JSON döndür: {"<malzeme anahtarı>":[{"i":0,"qty":500}], ...}  (uygun teklif yoksa boş liste)`;
   for (let t = 0; t < 3; t++) {
@@ -132,7 +146,7 @@ console.log(`${perKey.length} malzeme için aday teklif bulundu.`);
 
 const out = {};
 const add = (o, k, qty) => {
-  (out[o.market] ||= []).push({ n: o.n, size: o.size, p: o.p, old: o.old, key: k, qty, from: o.from, to: o.to });
+  (out[o.market] ||= []).push({ n: o.n, size: o.size, p: o.p, old: o.old, app: o.app, key: k, qty, from: o.from, to: o.to });
 };
 if (API_KEY) {
   for (let i = 0; i < perKey.length; i += 8) {
