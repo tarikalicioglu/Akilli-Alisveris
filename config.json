@@ -1,0 +1,37 @@
+{
+  "zip": "",
+  "model": "claude-haiku-5-5",
+  "markets": {
+    "Aldi": ["aldi"],
+    "Lidl": ["lidl"],
+    "Kaufland": ["kaufland"],
+    "Netto Scottie": ["scottie"],
+    "Netto": ["netto"],
+    "Penny": ["penny"],
+    "Rewe": ["rewe"],
+    "Edeka": ["edeka"],
+    "Norma": ["norma"]
+  },
+  "excludeAdvertisers": ["rewe to go", "edeka24"],
+  "skip": ["iskembe", "kuzuincik", "asma", "kurudolma", "kuruaci", "tarhana", "gullac", "kadayif", "baklavayufka", "bugday", "fava", "pekmez", "mantihaz", "ibulgur", "blutwurst", "leberkase", "flammteig", "schupf", "jelatin", "kedidili", "semizotu", "bakla", "spargel", "ayva", "rinderbraten", "kalb", "ksarap", "bsarap", "bira"],
+  "searchTerms": {
+    "kiyma": "Rinderhackfleisch", "kkiyma": "Lammhackfleisch", "hackmix": "Hackfleisch gemischt", "dana": "Rindergulasch",
+    "kuzu": "Lammfleisch", "kuzupirzola": "Lammkoteletts", "biftek": "Rindersteak", "rouladen": "Rinderrouladen",
+    "tgogus": "Hähnchenbrustfilet", "tbut": "Hähnchenschenkel", "tbutfile": "Hähnchen Oberkeulenfilet", "tbutun": "Hähnchen ganz",
+    "tkanat": "Hähnchenflügel", "ciger": "Rinderleber", "sucuk": "Sucuk", "pastirma": "Pastirma", "hindifume": "Putenbrust Aufschnitt",
+    "sosis": "Wiener Würstchen", "speck": "Speckwürfel", "jambon": "Kochschinken", "schwschnitzel": "Schweineschnitzel", "schwnacken": "Schweinenacken",
+    "somon": "Lachsfilet", "levrek": "Dorade", "beyazbalik": "Seelachsfilet", "karides": "Garnelen", "midye": "Miesmuscheln", "ton": "Thunfisch",
+    "sogan": "Zwiebeln", "ksogan": "rote Zwiebeln", "ysogan": "Lauchzwiebeln", "sarimsak": "Knoblauch", "domates": "Tomaten", "cdomates": "Cherrytomaten",
+    "salatalik": "Salatgurke", "patlican": "Aubergine", "kabak": "Zucchini", "sbiber": "Spitzpaprika", "dbiber": "Paprika", "kbiber": "Paprika rot",
+    "acibiber": "Chili", "patates": "Kartoffeln", "havuc": "Karotten", "ispanak": "Spinat", "pirasa": "Lauch", "lahana": "Weißkohl",
+    "karalahana": "Grünkohl", "klahana": "Rotkohl", "tfasulye": "grüne Bohnen", "bezelye": "Erbsen", "enginar": "Artischocken",
+    "maydanoz": "Petersilie", "dereotu": "Dill", "nane": "Minze", "feslegen": "Basilikum", "marul": "Salat", "limon": "Zitronen",
+    "elma": "Äpfel", "pancar": "Rote Bete", "balkabagi": "Hokkaido Kürbis", "sut": "Milch", "yogurt": "Joghurt", "suzme": "griechischer Joghurt",
+    "tereyagi": "Butter", "yumurta": "Eier", "bpeynir": "Hirtenkäse", "kasar": "Gouda", "emmentaler": "Emmentaler", "krema": "Schlagsahne",
+    "kpeynir": "Frischkäse", "schmand": "Schmand", "pirinc": "Reis", "risotto": "Risottoreis", "bulgur": "Bulgur", "kmercimek": "rote Linsen",
+    "ymercimek": "Linsen", "nohut": "Kichererbsen", "nohutk": "Kichererbsen Dose", "kfasulye": "weiße Bohnen", "barbunya": "Kidneybohnen",
+    "un": "Mehl", "seker": "Zucker", "makarna": "Nudeln", "spagetti": "Spaghetti", "salca": "Tomatenmark", "dkonserve": "gehackte Tomaten",
+    "passata": "passierte Tomaten", "zyagi": "Olivenöl", "aycicek": "Sonnenblumenöl", "lavas": "Wraps", "pide": "Fladenbrot", "ekmek": "Brot",
+    "ceviz": "Walnusskerne", "pommes": "Pommes", "fischstab": "Fischstäbchen", "milfoy": "Blätterteig"
+  }
+}
