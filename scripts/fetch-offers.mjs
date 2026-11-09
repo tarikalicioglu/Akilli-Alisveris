@@ -161,8 +161,13 @@ if (API_KEY) {
 } else {
   console.warn("ANTHROPIC_API_KEY yok: basit eşleştirme kullanılıyor (daha az isabetli).");
   for (const { k, cands } of perKey) {
-    const term = searchTerm(k).toLowerCase().split(" ")[0];
-    for (const o of cands) { const q = guessQty(k, o); if (q && o.n.toLowerCase().includes(term)) add(o, k, q); }
+    const term = searchTerm(k).toLowerCase().split(" ").pop().replace(/n$/, "");
+    const neg = (config.excludeWords || []).filter((w) => !term.includes(w.trim()));
+    for (const o of cands) {
+      const name = (o.n + " ").toLowerCase();
+      if (!name.includes(term) || neg.some((w) => name.includes(w))) continue;
+      const q = guessQty(k, o); if (q) add(o, k, q);
+    }
   }
 }
 
