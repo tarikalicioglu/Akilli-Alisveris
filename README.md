@@ -10,21 +10,17 @@ Haftalık yemek menünden alışveriş listesi çıkaran ve market tekliflerini 
 - Haftalık menü → miktarlı veya sadece liste, işaretlenebilir alışveriş listesi
 - Market teklifleri: her **pazartesi ve perşembe sabahı** posta koduna göre otomatik çekilir
 - Market market toplam fiyat raporu ve "karma plan" (her ürünü en ucuz yerden al)
-- Elle PDF / ekran görüntüsü prospekt yükleme, yapay zeka ile tarif oluşturma
+- Menüyü yazıyla ekleme ("pazartesi karnıyarık, salı Antep usulü lahmacun…"), kendi tariflerini ekleme
 
 ## Kurulum (bir kerelik)
-1. **API anahtarını GitHub'a ekle:** Repo → **Settings → Secrets and variables → Actions → New repository secret**
-   - Name: `ANTHROPIC_API_KEY`
-   - Secret: console.anthropic.com'dan aldığın anahtar
-2. **Posta kodunu yaz:** `config.json` içindeki `"zip": ""` alanına posta kodunu yaz.
-3. **İlk güncelleme:** Repo → **Actions → "Market tekliflerini güncelle" → Run workflow**.
-4. Uygulamada **Ayarlar → Bağlantılar**'a aynı API anahtarını gir (uygulama içi yapay zeka için; sadece telefonda saklanır).
+1. **Siteyi aç:** Repo → **Settings → Pages** → Branch: **main**, klasör **/ (root)** → **Save**.
+2. Telefonda uygulama adresini aç → tarayıcı menüsünden **"Ana ekrana ekle"**.
 
-### İsteğe bağlı: uygulamadan "Şimdi yeniden çek" butonu
-GitHub → Settings → Developer settings → **Fine-grained tokens** → Generate new token
-- Repository access: sadece `Akilli-Alisveris`
-- Permissions: **Actions: Read and write**
-Oluşan anahtarı uygulamada **Ayarlar → GitHub anahtarı** alanına yapıştır.
+Posta kodu `config.json` dosyasında (`45307`). Teklifler her pazartesi ve perşembe sabahı otomatik güncellenir.
+
+### Teklifleri elle yenilemek
+Uygulamada **Marketler → 🔄 Şimdi yeniden çek** → açılan GitHub sayfasında **Run workflow**.
+(İstersen Ayarlar → Gelişmiş'e bir GitHub anahtarı girerek bu butonun doğrudan çalışmasını sağlayabilirsin; zorunlu değil.)
 
 ## Dosyalar
 | Dosya | Ne işe yarar |
