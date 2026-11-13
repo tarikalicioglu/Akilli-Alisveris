@@ -8,7 +8,7 @@ Haftalık yemek menünden alışveriş listesi çıkaran ve market tekliflerini 
 ## Neler yapar
 - 289 hazır tarif (207 Türk, 40 Alman, 42 Avrupa), yöreye göre tarif seçimi (Antep / Hatay / Urfa usulü vb.)
 - Haftalık menü → miktarlı veya sadece liste, işaretlenebilir alışveriş listesi
-- Market teklifleri: her **pazartesi ve perşembe sabahı** posta koduna göre otomatik çekilir
+- Market teklifleri: her **sabah** posta koduna göre otomatik çekilir
 - Market market toplam fiyat raporu ve "karma plan" (her ürünü en ucuz yerden al)
 - Menüyü yazıyla ekleme ("pazartesi karnıyarık, salı Antep usulü lahmacun…"), kendi tariflerini ekleme
 
@@ -16,7 +16,7 @@ Haftalık yemek menünden alışveriş listesi çıkaran ve market tekliflerini 
 1. **Siteyi aç:** Repo → **Settings → Pages** → Branch: **main**, klasör **/ (root)** → **Save**.
 2. Telefonda uygulama adresini aç → tarayıcı menüsünden **"Ana ekrana ekle"**.
 
-Posta kodu `config.json` dosyasında (`45307`). Teklifler her pazartesi ve perşembe sabahı otomatik güncellenir.
+Posta kodu `config.json` dosyasında (`45307`). Teklifler her sabah otomatik güncellenir.
 
 ### Teklifleri elle yenilemek
 Uygulamada **Marketler → 🔄 Şimdi yeniden çek** → açılan GitHub sayfasında **Run workflow**.

@@ -359,7 +359,7 @@ function listAsText(){
 let busy = null; // {market, pct, msg}
 function viewMarket(){
   let h=`<h2>🔄 Otomatik teklifler</h2><div class="card">
-    <div class="small muted">Her pazartesi ve perşembe sabahı ${feed&&feed.zip?esc(feed.zip)+" posta kodu için":"posta koduna göre"} marketlerin güncel teklifleri otomatik çekilir.</div>
+    <div class="small muted">Her sabah ${feed&&feed.zip?esc(feed.zip)+" posta kodu için":"posta koduna göre"} marketlerin güncel teklifleri otomatik çekilir.</div>
     <div style="margin:8px 0"><b>${feed&&feed.updatedAt?"Son güncelleme: "+new Date(feed.updatedAt).toLocaleString("tr-TR",{weekday:"short",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):(feedErr||"Henüz otomatik veri yok")}</b>${feed&&feed.zip?` · PLZ ${esc(feed.zip)}`:''}${feed&&feed.markets?`<div class="small muted">${Object.entries(feed.markets).map(([m,d])=>esc(m)+": "+(d.offers||[]).length).join(" · ")}</div>`:''}</div>
     ${dispatchState?`<div class="small"><span class="spin dark"></span> ${esc(dispatchState.msg)}</div>`:`<div class="row wrap"><button class="btn sm" data-act="feedLoad">📥 Güncel teklifleri al</button>${lsGet(GH_LS)?`<button class="btn sec sm" data-act="feedDispatch">🔄 Şimdi yeniden çek</button>`:`<a class="btn sec sm" style="text-decoration:none" href="https://github.com/${REPO.owner}/${REPO.repo}/actions/workflows/update-offers.yml" target="_blank" rel="noopener">🔄 Şimdi yeniden çek</a>`}</div>${lsGet(GH_LS)?'':`<div class="small muted" style="margin-top:6px">Açılan GitHub sayfasında <b>Run workflow</b> → yeşil <b>Run workflow</b>'a bas. 3-6 dk sonra burada “Güncel teklifleri al” de.`}</div>`}
   </div>`;
