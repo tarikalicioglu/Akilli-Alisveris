@@ -55,6 +55,7 @@ function applyFeed(f, silent){
   for(const [m,d] of Object.entries(f.markets)){
     if(!d.offers||!d.offers.length) continue;
     const prev=S.markets[m];
+    if(prev && prev.own) continue; // kendi marketin: dokunma
     if(prev && !prev.auto && prev.added > new Date(f.updatedAt).getTime()) continue; // elle yüklenen daha yeni
     S.markets[m]={offers:d.offers, validText:d.validText||"", validTo:d.validTo||"", added:new Date(f.updatedAt).getTime(), auto:true};
     if(!S.marketList.includes(m)) S.marketList.push(m); n+=d.offers.length;
@@ -363,7 +364,17 @@ function viewMarket(){
     <div style="margin:8px 0"><b>${feed&&feed.updatedAt?"Son güncelleme: "+new Date(feed.updatedAt).toLocaleString("tr-TR",{weekday:"short",day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"}):(feedErr||"Henüz otomatik veri yok")}</b>${feed&&feed.zip?` · PLZ ${esc(feed.zip)}`:''}${feed&&feed.markets?`<div class="small muted">${Object.entries(feed.markets).map(([m,d])=>esc(m)+": "+(d.offers||[]).length).join(" · ")}</div>`:''}</div>
     ${dispatchState?`<div class="small"><span class="spin dark"></span> ${esc(dispatchState.msg)}</div>`:`<div class="row wrap"><button class="btn sm" data-act="feedLoad">📥 Güncel teklifleri al</button>${lsGet(GH_LS)?`<button class="btn sec sm" data-act="feedDispatch">🔄 Şimdi yeniden çek</button>`:`<a class="btn sec sm" style="text-decoration:none" href="https://github.com/${REPO.owner}/${REPO.repo}/actions/workflows/update-offers.yml" target="_blank" rel="noopener">🔄 Şimdi yeniden çek</a>`}</div>${lsGet(GH_LS)?'':`<div class="small muted" style="margin-top:6px">Açılan GitHub sayfasında <b>Run workflow</b> → yeşil <b>Run workflow</b>'a bas. 3-6 dk sonra burada “Güncel teklifleri al” de.`}</div>`}
   </div>`;
-  const withOffers=S.marketList.filter(m=>S.markets[m]&&S.markets[m].offers.length);
+  const withOffers=S.marketList.filter(m=>S.markets[m]&&S.markets[m].offers.length&&!S.markets[m].own);
+  const own=S.marketList.filter(m=>S.markets[m]&&S.markets[m].own);
+  h+=`<h2>🏪 Kendi marketlerim</h2><div class="small muted" style="margin:-4px 2px 8px">Türk marketi, kasap, pazar… Oradan aldığın ürünlerin fiyatını bir kez gir; raporda o market de karşılaştırılır.</div>`;
+  if(own.length){
+    h+=`<div class="card" style="padding:4px 12px">`;
+    for(const m of own){ const d=S.markets[m];
+      h+=`<div class="mk" style="padding:8px 0;border-bottom:1px dashed var(--line)" data-act="ownOpen" data-m="${esc(m)}" role="button"><div class="mlogo" style="background:var(--olive);width:38px;height:38px">${esc(m.slice(0,4).toUpperCase())}</div>
+        <div class="grow"><b>${esc(m)}</b><div class="small muted">${d.offers.length} ürün fiyatı girildi</div></div><span class="btn sec sm">Fiyatlar</span></div>`; }
+    h+=`</div>`;
+  }
+  h+=`<button class="btn sec full" data-act="ownAdd" style="margin-bottom:6px">+ Market ekle</button>`;
   if(withOffers.length){
     h+=`<h2>Marketler</h2><div class="card" style="padding:4px 12px">`;
     for(const m of withOffers){ const d=S.markets[m]; const exp=d.validTo && new Date(d.validTo+"T23:59:59")<new Date(); const col=MCOL[m]||"#7A6B5D";
@@ -396,7 +407,7 @@ function computeReport(){
   const base=items.reduce((s,i)=>s+avgCost(i.key,i.qty),0);
   const rows=mks.map(m=>{
     let total=0, hits=0; const lines=items.map(i=>{ const b=bestOffer(m,i.key,i.qty); const a=avgCost(i.key,i.qty);
-      if(b && b.cost<=a){ hits++; total+=b.cost; return {i, offer:b, cost:b.cost, avg:a}; } total+=a; return {i, cost:a, avg:a}; });
+      if(b && (b.cost<=a || S.markets[m].own)){ hits++; total+=b.cost; return {i, offer:b, cost:b.cost, avg:a}; } total+=a; return {i, cost:a, avg:a}; });
     return {m,total,hits,lines};
   }).sort((a,b)=>a.total-b.total);
   // karma: her ürünü en ucuz yerden al
@@ -511,6 +522,14 @@ document.addEventListener("click", async e=>{
     case "copyReport": copyText(reportText()); break;
     case "clearOffers": if(await ask(d.m+" prospekt ürünleri silinsin mi?","Sil")){ delete S.markets[d.m]; if(!DEFAULT_MARKETS.includes(d.m) && await ask(d.m+" listeden de kaldırılsın mı?","Kaldır","Kalsın")) S.marketList=S.marketList.filter(x=>x!==d.m); save(); render(); } break;
     case "viewOffers": viewOffers(d.m); break;
+    case "ownAdd": ownAddSheet(); break;
+    case "ownCreate": { const n=(d.m||($("#ownName")&&$("#ownName").value)||"").trim(); if(!n){ toast("Market adı yaz"); break; }
+      if(S.markets[n] && !S.markets[n].own){ toast("Bu isimde bir market zaten var"); break; }
+      if(!S.marketList.includes(n)) S.marketList.push(n); if(!S.markets[n]) S.markets[n]={offers:[],own:true,added:Date.now()}; save(); render(); ownSheet(n); break; }
+    case "ownOpen": ownSheet(d.m); break;
+    case "ownSave": ownSavePrice(d.m); break;
+    case "ownDel": { S.markets[d.m].offers.splice(+d.i,1); save(); render(); ownSheet(d.m); break; }
+    case "ownRemove": if(await ask(d.m+" ve girdiğin fiyatlar silinsin mi?","Sil")){ delete S.markets[d.m]; S.marketList=S.marketList.filter(x=>x!==d.m); save(); closeSheet(); render(); } break;
     case "delOffer": { const m=S.markets[d.m]; m.offers.splice(+d.i,1); save(); viewOffers(d.m); render(); break; }
     case "pork": S.hidePork=!S.hidePork; save(); render(); break;
     case "feedLoad": { const f=await loadFeed(); if(f) applyFeed(f); else toast(feedErr); render(); break; }
@@ -542,6 +561,37 @@ function addMarket(){
   openSheet(`<h1>Market ekle</h1><div class="days" style="margin:8px 0">${["Rewe","Edeka","Norma","Real","Globus","Türk marketi"].filter(m=>!S.marketList.includes(m)).map(m=>`<button class="chip" data-act="mkAdd" data-m="${m}">${m}</button>`).join("")}</div><label class="lb">veya adını yaz</label><input type="text" id="mkName" placeholder="Market adı"><button class="btn full" style="margin-top:10px" data-act="mkAdd">Ekle</button>`);
 }
 document.addEventListener("click", e=>{ const el=e.target.closest('[data-act="mkAdd"]'); if(!el) return; const m=(el.dataset.m||($("#mkName")&&$("#mkName").value)||"").trim(); if(m && !S.marketList.includes(m)){ S.marketList.push(m); save(); } closeSheet(); render(); });
+function ownAddSheet(){
+  openSheet(`<h1>Market ekle</h1><p class="small muted">Örnek isimler (dokununca eklenir) veya kendin yaz:</p>
+   <div class="days" style="margin:8px 0">${["Türk marketi","Kasap","Pazar","Aldi (kendi fiyatlarım)"].filter(m=>!S.marketList.includes(m)).map(m=>`<button class="chip" data-act="ownCreate" data-m="${esc(m)}">${esc(m)}</button>`).join("")}</div>
+   <label class="lb">Market adı</label><input type="text" id="ownName" placeholder="ör. Bolu Market, Kasap Ali"><button class="btn full" style="margin-top:10px" data-act="ownCreate">Ekle</button>`);
+}
+function ownSheet(m){
+  const d=S.markets[m]; if(!d){ closeSheet(); return; }
+  openSheet(`<div class="row"><h1 class="grow">${esc(m)}</h1><button class="iconbtn" data-act="ownRemove" data-m="${esc(m)}" title="Marketi sil">🗑️</button></div>
+   <div class="small muted">Bu markette aldığın ürünlerin <b>paket</b> fiyatını gir. Fiyatlar sen değiştirene kadar kalır.</div>
+   <div class="card" style="margin-top:10px">
+     <label class="lb" style="margin-top:0">Ürün</label><input type="text" id="opIng" list="ingdl3" placeholder="ör. Sucuk, Dana kıyma, Yufka">
+     <datalist id="ingdl3">${Object.keys(ING_BASE).concat(Object.keys(S.customIng)).map(k=>`<option value="${esc(ING(k).tr)}">`).join("")}</datalist>
+     <div class="row" style="margin-top:8px"><div class="grow"><label class="lb" style="margin-top:0">Paket miktarı <span id="opUnit" class="muted"></span></label><input type="text" inputmode="decimal" id="opQty" placeholder="ör. 500"></div>
+       <div class="grow"><label class="lb" style="margin-top:0">Fiyat (€)</label><input type="text" inputmode="decimal" id="opPrice" placeholder="ör. 4,99"></div></div>
+     <button class="btn full" style="margin-top:10px" data-act="ownSave" data-m="${esc(m)}">Fiyatı kaydet</button>
+   </div>
+   ${d.offers.length?`<div class="ings">${d.offers.map((o,i)=>`<div class="ing"><span><b>${esc(o.n)}</b> <span class="muted">${esc(o.size)}</span></span><span style="text-align:right"><b>${eur(o.p)}</b> <button class="havebtn" data-act="ownDel" data-m="${esc(m)}" data-i="${i}">sil</button></span></div>`).join("")}</div>`:'<div class="empty small">Henüz fiyat yok.</div>'}`);
+}
+function findIngKey(name){ const nv=norm(name.trim()); const ks=Object.keys(ING_BASE).concat(Object.keys(S.customIng)); return ks.find(k=>norm(ING(k).tr)===nv) || ks.find(k=>norm(ING(k).tr).startsWith(nv)) || ks.find(k=>norm(ING(k).de).startsWith(nv)); }
+document.addEventListener("input",e=>{ if(e.target.id==="opIng"){ const k=findIngKey(e.target.value); const u=$("#opUnit"); if(u) u.textContent=k?"("+(UNITS[ING(k).unit]||ING(k).unit)+")":""; } });
+function ownSavePrice(m){
+  const name=($("#opIng").value||"").trim(); const k=findIngKey(name);
+  if(!k){ toast("Ürünü listeden seç"); return; }
+  const g=ING(k); let q=parseFloat(String($("#opQty").value).replace(",",".")); const p=parseFloat(String($("#opPrice").value).replace(",","."));
+  if(!(p>0)){ toast("Fiyatı yaz"); return; }
+  if(!(q>0)) q=g.packQty;
+  const d=S.markets[m]; const i=d.offers.findIndex(o=>o.key===k);
+  const o={n:g.tr, size:fmtQty(q,g.unit), p, key:k, qty:q, manual:true};
+  if(i>=0) d.offers[i]=o; else d.offers.push(o);
+  d.added=Date.now(); save(); render(); ownSheet(m); toast(g.tr+" kaydedildi");
+}
 function viewOffers(m){
   const d=S.markets[m]; if(!d){ closeSheet(); return; }
   openSheet(`<h1>${esc(m)} · ${d.offers.length} ürün</h1><div class="small muted">${esc(d.validText||"")}</div>
